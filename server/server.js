@@ -1,9 +1,12 @@
 const express = require("express");
 const errorHandler = require("./middleware/errorHandler");
+const connectDb = require("./config/dbcon");
 const dotenv = require("dotenv").config();
 const app = express();
 
 const port = process.env.PORT || 5000;
+
+connectDb();
 
 app.use(express.json()); // to parse json data from the client side
 app.use("/api/contacts", require("./routes/contactRoutes"));
