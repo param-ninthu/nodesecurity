@@ -3,16 +3,16 @@ const Contact = require("./../models/contactModel");
 const { request } = require("express");
 //@desc Get all contacts
 //@route GET /api/contacts
-//@access Public
+//@access private
 
 const getContacts = asynHandler(async (req, res) => {
-  const contacts = await Contact.find();
+  const contacts = await Contact.find({ user_id: req.user.id });
   res.json(contacts);
 });
 
 //@desc Create new contacts
 //@route POST /api/contacts
-//@access Public
+//@access private
 
 const createContact = asynHandler(async (req, res) => {
   console.log(req.body);
@@ -21,20 +21,30 @@ const createContact = asynHandler(async (req, res) => {
     res.status(400);
     throw new Error("All fields are required");
   }
-  const contact = await Contact.create({ name, email, phone });
+  const contact = await Contact.create({
+    name,
+    email,
+    phone,
+    user_id: req.user.id,
+  });
 
   res.json(contact);
 });
 
 //@desc Update  contacts
 //@route PUT /api/contacts/:id
-//@access Public
+//@access private
 
 const updateContact = asynHandler(async (req, res) => {
   const contact = await Contact.findById(req.params.id);
   if (!contact) {
     res.status(404);
     throw new Error("Contact not found");
+  }
+
+  if (contact.user_id.toString() !== req.user.id) {
+    res.status(403);
+    throw new Error("User don't have permission");
   }
 
   const updatedContact = await Contact.findByIdAndUpdate(
@@ -48,13 +58,17 @@ const updateContact = asynHandler(async (req, res) => {
 
 //@desc Delete contacts
 //@route DELETE /api/contacts/:id
-//@access public
+//@access private
 
 const deleteContact = asynHandler(async (req, res) => {
   const contact = await Contact.findById(req.params.id);
   if (!contact) {
     res.status(404);
     throw new Error("Contact not found");
+  }
+  if (contact.user_id.toString() !== req.user.id) {
+    res.status(403);
+    throw new Error("User don't have permission");
   }
 
   await Contact.deleteOne();
@@ -63,7 +77,7 @@ const deleteContact = asynHandler(async (req, res) => {
 
 //@desc Get one contact
 //@route GET /api/contacts/:id
-//@access Public
+//@access private
 
 const getContact = asynHandler(async (req, res) => {
   const contact = await Contact.findById(req.params.id);
